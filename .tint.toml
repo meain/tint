@@ -1,0 +1,7 @@
+[rules.function_snake_case]
+kind = "warning" # just a string
+message = "incorrect function name format for {}" # {} gets replaced with the "lint" object
+language = "go"
+query="""((function_declaration
+  name: (identifier) @lint) @func
+  (#match? @lint "[a-z]"))""" # use `lint` for the actual thing (name TBD)

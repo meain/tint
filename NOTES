@@ -1,0 +1,27 @@
+# CLI interface
+
+```
+$ tint lint
+
+Reading config from .tint.toml
+./src/main.rs:1:1:3:error: missing `fn` in function declaration
+./src/gopher.go:1:1:6:error: missing `package` declaration
+./src/gopher.go:33:4:14:error: incorrect function name format
+```
+
+## Output format
+- default: `<filename>:<line>:<beg>:<end>:<kind>: <message>`
+- json: `{"filename": "<filename>", "line": <line>, "beg": <beg>, "end": <end>, "kind": "<kind>", "message": "<message>"}`
+
+
+# Config format
+
+```toml
+[rules.function_snake_case]
+kind = "warning" # just a string
+message = "incorrect function name format for {}" # {} gets replaced with the "lint" object
+language = "go"
+query="""((function_declaration
+  name: (identifier) @lint)
+  (#match? @lint "_"))""" # use `lint` for the actual thing (name TBD)
+```
