@@ -104,6 +104,7 @@ func main() {
 
 		selectedRules := map[string]Rule{}
 		if len(CLI.Lint.Rules) == 0 {
+			selectedRules = config.Rules
 		} else {
 			for _, rn := range CLI.Lint.Rules {
 				if _, ok := config.Rules[rn]; !ok {

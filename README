@@ -1,1 +1,4 @@
 tint - tree-sitter powered linter
+
+Running: `tint lint`
+Config: Sample file available in `.tint.lint.sample` (default loc is `.tint.lint`)
