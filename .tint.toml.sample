@@ -1,7 +1,25 @@
-[rules.no-function]
-kind = "warning" # just a string
-message = "using function {}" # {} gets replaced with the "lint" object
-language = "go"
-query="""((function_declaration
-  name: (identifier) @lint) @func
-  (#match? @lint "[a-z]"))""" # use `lint` for the actual thing
+[rules.no-trailing-comma]
+language="go"
+message = "do not use trailing comma for args"
+query='(argument_list "," @region .)'
+
+[rules.no-string-comparison]
+language="go"
+message = "do not use \"\" to check for empty string for '{}'"
+query='''((binary_expression
+  (identifier) @region ["==" "!="] (interpreted_string_literal) @_ri)
+  (#eq? @_ri "\"\""))'''
+
+[rules.standard-name-for-test-suite]
+language="go"
+message = "use 'suite' as the receiver name for {}"
+query='''
+((method_declaration
+  (parameter_list
+   (parameter_declaration (identifier) @name
+                          (pointer_type) @type))
+  (field_identifier) @region)
+ (#not-eq? @name "suite")
+ (#match? @type "Suite$")
+ (#match? @region "^Test"))
+'''
