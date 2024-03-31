@@ -29,10 +29,12 @@ func runLint(
 	path string,
 	query string,
 	message string,
-) error {
+) (int, error) {
+	errCount := 0
+
 	sourceCode, err := readFile(path)
 	if err != nil {
-		return errors.Wrap(err, "unable to read file")
+		return 0, errors.Wrap(err, "unable to read file")
 	}
 
 	parser := sitter.NewParser()
@@ -40,12 +42,12 @@ func runLint(
 
 	tree, err := parser.ParseCtx(ctx, nil, sourceCode)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse file")
+		return 0, errors.Wrap(err, "unable to parse file")
 	}
 
 	q, err := sitter.NewQuery([]byte(query), lang)
 	if err != nil {
-		return errors.Wrap(err, "unable to create query")
+		return 0, errors.Wrap(err, "unable to create query")
 	}
 
 	qc := sitter.NewQueryCursor()
@@ -60,24 +62,29 @@ func runLint(
 		m = qc.FilterPredicates(m, sourceCode)
 		for _, c := range m.Captures {
 			// Only use "lint" capture name
-			if q.CaptureNameForId(c.Index) != "lint" {
+			if q.CaptureNameForId(c.Index) != "region" {
 				continue
 			}
 
+			// TODO: user should be able to use any capture here and a
+			// separate one for the region to mark
+			// NOTE: Start and end could be on separate lines
 			msg := strings.Replace(message, "{}", c.Node.Content(sourceCode), -1)
 			output := fmt.Sprintf(
-				"%s:%d:%d:%d %s",
+				"%s:%d:%d:%d:%d %s",
 				path,
-				c.Node.StartPoint().Row,
+				c.Node.StartPoint().Row+1,
 				c.Node.StartPoint().Column,
-				c.Node.EndPoint().Column,
+				c.Node.EndPoint().Row+1,
+				c.Node.EndPoint().Column-1,
 				msg,
 			)
 
 			// Should we move the print to somewhere else?
+			errCount += 1
 			fmt.Println(output)
 		}
 	}
 
-	return nil
+	return errCount, nil
 }
