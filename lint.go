@@ -23,6 +23,9 @@ func readFile(path string) ([]byte, error) {
 	return io.ReadAll(f)
 }
 
+// TODO: Some way to ignore certain instances for a lint error
+// Other option would be to have the user itself form the query so as
+// to look for a comment
 func runLint(
 	ctx context.Context,
 	lang *sitter.Language,

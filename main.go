@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -36,7 +37,7 @@ func lint(
 		filepath.Walk(target, func(path string, info os.FileInfo, err error) error {
 			// TODO: simple string match might not be enough
 			for _, exclude := range excludes {
-				if path == exclude {
+				if strings.HasPrefix(path, exclude) {
 					return nil
 				}
 			}
