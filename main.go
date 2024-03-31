@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/alecthomas/kong"
-	sitter "github.com/smacker/go-tree-sitter"
 )
 
 var CLI struct {
@@ -19,61 +15,7 @@ var CLI struct {
 		Excluedes []string `short:"e" long:"exclude" help:"Files or folders to exclude"`
 	} `cmd:"lint" help:"Lint files or folders"`
 
-	Config string `short:"c" long:"config" help:"Path to config file"`
-}
-
-// TODO: reorder args
-func runRule(ctx context.Context, path string, query string, lang *sitter.Language, message string) {
-	f, err := os.Open(path)
-	if err != nil {
-		log.Fatal("unable to open file", err)
-	}
-
-	defer f.Close()
-
-	sourceCode, err := io.ReadAll(f)
-	if err != nil {
-		log.Fatal("unable to read file", err)
-	}
-
-	parser := sitter.NewParser()
-	parser.SetLanguage(lang)
-
-	tree, err := parser.ParseCtx(ctx, nil, sourceCode)
-	if err != nil {
-		log.Fatal("unable to parse", err)
-	}
-
-	// Define the query
-	q, err := sitter.NewQuery([]byte(query), lang)
-	if err != nil {
-		log.Fatal("unable to create query", err)
-	}
-
-	// Execute the query
-	qc := sitter.NewQueryCursor()
-	qc.Exec(q, tree.RootNode())
-
-	// Iterate over the matches
-	for {
-		m, ok := qc.NextMatch()
-		if !ok {
-			break
-		}
-
-		// Apply predicates filtering
-		m = qc.FilterPredicates(m, sourceCode)
-		for _, c := range m.Captures {
-			// Only use "lint" capture name
-			if q.CaptureNameForId(c.Index) != "lint" {
-				continue
-			}
-
-			msg := strings.Replace(message, "{}", c.Node.Content(sourceCode), -1)
-			output := "%s:%d:%d:%d %s"
-			fmt.Println(fmt.Sprintf(output, path, c.Node.StartPoint().Row, c.Node.StartPoint().Column, c.Node.EndPoint().Column, msg))
-		}
-	}
+	Config string `long:"config" help:"Path to config file"`
 }
 
 func lint(ctx context.Context, targets []string, excludes []string, rules map[string]Rule) {
@@ -94,7 +36,7 @@ func lint(ctx context.Context, targets []string, excludes []string, rules map[st
 				return nil
 			}
 
-			// TODO(meain): probably we could extract out parser and
+			// TODO: probably we could extract out parser and
 			// query creating out to a global one
 			for _, rule := range rules {
 				query := rule.Query
@@ -111,7 +53,7 @@ func lint(ctx context.Context, targets []string, excludes []string, rules map[st
 					continue
 				}
 
-				runRule(ctx, path, query, LanguageMap[rule.Language].TSLang, rule.Message)
+				runLint(ctx, LanguageMap[rule.Language].TSLang, path, query, rule.Message)
 			}
 
 			return nil
@@ -126,6 +68,10 @@ func main() {
 		config, err := parseConfig(CLI.Config)
 		if err != nil {
 			log.Fatal("unable to parse config", err)
+		}
+
+		if len(config.Rules) == 0 {
+			log.Fatal("no rules found in config")
 		}
 
 		lint(context.Background(), CLI.Lint.Files, CLI.Lint.Excluedes, config.Rules)
