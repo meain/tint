@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/alecthomas/kong"
 )
@@ -92,14 +93,17 @@ func main() {
 			log.Fatal("unable to parse config", err)
 		}
 
+		start := time.Now()
+
 		fileCount, errCount := lint(context.Background(), CLI.Lint.Files, CLI.Lint.Excluedes, config.Rules)
 
 		fmt.Fprintf(
 			os.Stderr,
-			"Found %d issues from %d files using %d rules\n",
+			"Found %d issues from %d files using %d rules in %s\n",
 			errCount,
 			fileCount,
 			len(config.Rules),
+			time.Since(start).Round(time.Second),
 		)
 
 		if errCount > 0 {
