@@ -1,4 +1,7 @@
 tint - tree-sitter powered linter
 
-Running: `tint lint`
-Config: Sample file available in `.tint.lint.sample` (default loc is `.tint.lint`)
+- Running: `tint lint`
+- Config: Sample file available in `.tint.lint.sample` (default loc is `.tint.lint`)
+- Output format: `filename:start-line:start-col:end-line:end-col: message`
+- Example output: `src/internal/kopia/data_collection.go:98:14:98:25: do not use clues.WrapWC if ctx is passed into the func`
+
