@@ -10,9 +10,6 @@ import (
 )
 
 type Rule struct {
-	// Kind is the kind of the rule (eg: error, warning)
-	Kind string
-
 	// Message is the message to be displayed when the rule is violated
 	// {} is replaced with the primary object if present
 	Message string
@@ -35,10 +32,6 @@ func validateConfig(config Config) error {
 	}
 
 	for name, rule := range config.Rules {
-		if rule.Kind == "" {
-			return errors.New("kind not found for rule " + name)
-		}
-
 		if rule.Message == "" {
 			return errors.New("message not found for rule " + name)
 		}

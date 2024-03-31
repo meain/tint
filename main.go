@@ -15,6 +15,7 @@ var CLI struct {
 	Lint struct {
 		Files     []string `arg:"" name:"files" help:"Files or folders to lint" default:"."`
 		Excluedes []string `short:"e" long:"exclude" help:"Files or folders to exclude"`
+		Rules     []string `short:"r" long:"rule" help:"Rules to check"`
 	} `cmd:"lint" help:"Lint files or folders"`
 
 	ValidateConfig struct{} `cmd:"validate-config" help:"Validate config file"`
@@ -22,7 +23,12 @@ var CLI struct {
 	Config string `long:"config" help:"Path to config file"`
 }
 
-func lint(ctx context.Context, targets []string, excludes []string, rules map[string]Rule) (int, int) {
+func lint(
+	ctx context.Context,
+	targets []string,
+	excludes []string,
+	rules map[string]Rule,
+) (int, int) {
 	errCount := 0
 	fileCount := 0
 
@@ -95,14 +101,31 @@ func main() {
 
 		start := time.Now()
 
-		fileCount, errCount := lint(context.Background(), CLI.Lint.Files, CLI.Lint.Excluedes, config.Rules)
+		selectedRules := map[string]Rule{}
+		if len(CLI.Lint.Rules) == 0 {
+		} else {
+			for _, rn := range CLI.Lint.Rules {
+				if _, ok := config.Rules[rn]; !ok {
+					log.Fatalf("rule %q not found in config", rn)
+				}
+
+				selectedRules[rn] = config.Rules[rn]
+			}
+		}
+
+		fileCount, errCount := lint(
+			context.Background(),
+			CLI.Lint.Files,
+			CLI.Lint.Excluedes,
+			selectedRules,
+		)
 
 		fmt.Fprintf(
 			os.Stderr,
 			"Found %d issues from %d files using %d rules in %s\n",
 			errCount,
 			fileCount,
-			len(config.Rules),
+			len(selectedRules),
 			time.Since(start).Round(time.Second),
 		)
 

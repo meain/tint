@@ -71,7 +71,7 @@ func runLint(
 			// NOTE: Start and end could be on separate lines
 			msg := strings.Replace(message, "{}", c.Node.Content(sourceCode), -1)
 			output := fmt.Sprintf(
-				"%s:%d:%d:%d:%d %s",
+				"%s:%d:%d:%d:%d: %s",
 				path,
 				c.Node.StartPoint().Row+1,
 				c.Node.StartPoint().Column,
