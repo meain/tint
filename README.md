@@ -9,7 +9,7 @@
 ### Installation
 
 ```
-go get -u github.com/meain/tint
+go install github.com/meain/tint@latest
 ```
 
 ### Example output:
