@@ -4,6 +4,7 @@
 
 - **Running**: `tint lint`
 - **Config**: Sample file available in `.tint.lint.sample` (default loc is `.tint.lint`)
+  For detailed instructions and examples on how to write a new rule, see [docs/writing_rules.md](docs/writing_rules.md).
 - **Output format**: `filename:start-line:start-col:end-line:end-col: message`
 
 ### Installation
