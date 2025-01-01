@@ -122,6 +122,11 @@ func main() {
 			selectedRules,
 		)
 
+		// No news is good news
+		if errCount == 0 {
+			return
+		}
+
 		fmt.Fprintf(
 			os.Stderr,
 			"Found %d issues from %d files using %d rules in %s\n",
