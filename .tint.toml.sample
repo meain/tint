@@ -1,7 +1,19 @@
+# Global configuration
+# Include patterns - if specified, only files matching these patterns will be linted
+# Use glob patterns like *.go, **/*.go, src/**/*.go, etc.
+include = ["**/*.go", "**/*.js", "**/*.ts"]
+
+# Exclude patterns - files matching these patterns will be excluded from linting
+# These are applied after include patterns
+exclude = ["vendor/**", "node_modules/**", "**/*_test.go", "**/testdata/**"]
+
 [rules.no-trailing-comma]
 language="go"
 message = "do not use trailing comma for args"
 query='(argument_list "," @region .)'
+# Per-rule patterns: only check main source files, not config files
+include = ["**/*.go"]
+exclude = ["**/config*.go"]
 
 [rules.no-string-comparison]
 language="go"
@@ -9,6 +21,7 @@ message = "do not use \"\" to check for empty string for '{}'"
 query='''((binary_expression
   (identifier) @region ["==" "!="] (interpreted_string_literal) @_ri)
   (#eq? @_ri "\"\""))'''
+# This rule applies to all files (inherits global patterns)
 
 [rules.standard-name-for-test-suite]
 language="go"
@@ -23,3 +36,5 @@ query='''
  (#match? @type "Suite$")
  (#match? @region "^Test"))
 '''
+# Per-rule patterns: only check test files
+include = ["**/*_test.go"]

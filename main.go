@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -14,9 +13,8 @@ import (
 
 var CLI struct {
 	Lint struct {
-		Files     []string `arg:"" name:"files" help:"Files or folders to lint" default:"."`
-		Excluedes []string `short:"e" long:"exclude" help:"Files or folders to exclude"`
-		Rules     []string `short:"r" long:"rule" help:"Rules to check"`
+		Files []string `arg:"" name:"files" help:"Files or folders to lint" default:"."`
+		Rules []string `short:"r" long:"rule" help:"Rules to check"`
 	} `cmd:"lint" help:"Lint files or folders"`
 
 	ValidateConfig struct{} `cmd:"validate-config" help:"Validate config file"`
@@ -24,29 +22,18 @@ var CLI struct {
 	Config string `long:"config" help:"Path to config file"`
 }
 
-func lint(
-	ctx context.Context,
-	targets []string,
-	excludes []string,
-	rules map[string]Rule,
-) (int, int) {
+func lint(ctx context.Context, targets []string, rules map[string]Rule, config Config) (int, int) {
 	errCount := 0
 	fileCount := 0
 
 	for _, target := range targets {
 		filepath.Walk(target, func(path string, info os.FileInfo, err error) error {
-			// TODO: simple string match might not be enough
-			for _, exclude := range excludes {
-				if strings.HasPrefix(path, exclude) {
-					return nil
-				}
-			}
-
 			if err != nil {
 				log.Fatal("unable to walk through file", err)
 			}
 
-			if info.IsDir() {
+			// Check if this file should be processed based on config patterns
+			if !info.IsDir() && !shouldProcessPath(path, config.Include, config.Exclude) {
 				return nil
 			}
 
@@ -56,6 +43,15 @@ func lint(
 			// query creating out to a global one
 			for _, rule := range rules {
 				query := rule.Query
+
+				if info.IsDir() {
+					continue
+				}
+
+				// Check if this file should be processed for this specific rule
+				if !shouldProcessPath(path, rule.Include, rule.Exclude) {
+					continue
+				}
 
 				found := false
 				for _, ext := range LanguageMap[rule.Language].Extensions {
@@ -115,12 +111,7 @@ func main() {
 			}
 		}
 
-		fileCount, errCount := lint(
-			context.Background(),
-			CLI.Lint.Files,
-			CLI.Lint.Excluedes,
-			selectedRules,
-		)
+		fileCount, errCount := lint(context.Background(), CLI.Lint.Files, selectedRules, config)
 
 		// No news is good news
 		if errCount == 0 {

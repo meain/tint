@@ -2,6 +2,48 @@
 
 This document provides detailed instructions on how to write new rules for the tint linter.
 
+## Configuration
+
+### Global Configuration
+
+You can configure which files to include or exclude from linting using glob patterns:
+
+```toml
+# Include patterns - if specified, only files matching these patterns will be linted
+include = ["**/*.go", "src/**/*.js", "**/*.ts"]
+
+# Exclude patterns - files matching these patterns will be excluded from linting
+exclude = ["vendor/**", "node_modules/**", "**/testdata/**", "**/*_test.go"]
+```
+
+### Per-Rule Configuration
+
+Each rule can also specify its own include and exclude patterns:
+
+```toml
+[rules.my-go-rule]
+language = "go"
+message = "Custom rule for Go files"
+query = "..."
+include = ["**/*.go"]           # Only apply to Go files
+exclude = ["**/generated/**"]   # But not generated files
+
+[rules.test-only-rule]
+language = "go"
+message = "Rule that only applies to tests"
+query = "..."
+include = ["**/*_test.go"]      # Only apply to test files
+```
+
+**Pattern matching rules:**
+- **Global patterns** are applied first to determine which files to process
+- **Per-rule patterns** are then applied to determine if a specific rule should run on a file
+- If `include` patterns are provided (global or per-rule), only files matching at least one pattern will be processed
+- If `exclude` patterns are provided (global or per-rule), files matching any pattern will be skipped
+- The pattern resolution order is: Global include → Global exclude → Per-rule include → Per-rule exclude
+- Patterns support glob syntax including `**` for recursive directories and `*` for wildcards
+- Both files and directories are checked (excluded directories are skipped entirely for performance)
+
 ## Rule Structure
 
 Rules are defined in the configuration file (e.g., `.tint.toml`) under the `[rules]` section. Each rule is defined in its own subsection and must have the following fields:

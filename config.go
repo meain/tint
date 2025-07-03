@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"
 	sitter "github.com/smacker/go-tree-sitter"
@@ -20,10 +22,18 @@ type Rule struct {
 	// Query is the tree-sitter query to be run
 	// Query can contain multiple queries
 	Query string
+
+	// Include patterns specific to this rule
+	Include []string `toml:"include,omitempty"`
+
+	// Exclude patterns specific to this rule
+	Exclude []string `toml:"exclude,omitempty"`
 }
 
 type Config struct {
-	Rules map[string]Rule
+	Rules   map[string]Rule
+	Include []string `toml:"include,omitempty"`
+	Exclude []string `toml:"exclude,omitempty"`
 }
 
 func validateConfig(config Config) error {
@@ -88,4 +98,44 @@ func parseConfig(config string) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// shouldProcessPath determines if a path should be processed based on include/exclude patterns
+func shouldProcessPath(path string, includePatterns, excludePatterns []string) bool {
+	// Convert to clean path for consistent matching
+	cleanPath := filepath.Clean(path)
+
+	// If include patterns are specified, the path must match at least one
+	if len(includePatterns) > 0 {
+		included := false
+		for _, pattern := range includePatterns {
+			match, err := doublestar.Match(pattern, cleanPath)
+			if err != nil {
+				// If pattern is invalid, skip it and continue
+				continue
+			}
+			if match {
+				included = true
+				break
+			}
+		}
+		// If include patterns exist but none matched, exclude the path
+		if !included {
+			return false
+		}
+	}
+
+	// Check exclude patterns - if any match, exclude the path
+	for _, pattern := range excludePatterns {
+		match, err := doublestar.Match(pattern, cleanPath)
+		if err != nil {
+			// If pattern is invalid, skip it and continue
+			continue
+		}
+		if match {
+			return false
+		}
+	}
+
+	return true
 }

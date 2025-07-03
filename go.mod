@@ -8,3 +8,5 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/smacker/go-tree-sitter v0.0.0-20240320021847-a4b649a78290
 )
+
+require github.com/bmatcuk/doublestar/v4 v4.8.1 // indirect
